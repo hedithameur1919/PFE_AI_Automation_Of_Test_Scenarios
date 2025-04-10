@@ -1,0 +1,79 @@
+Requirements;Test Scenarios
+The user should be able to reset their password.;"User resets their password
+Given the user is on the login page
+When they click on ""Forgot Password""
+And they enter their email address
+Then they should receive a password reset link via email"
+The user should be able to log in with valid credentials.;"Given the user is on the login page
+When they enter a valid username and password
+And they click on the login button
+Then they should be redirected to the dashboard"
+The user should see an error when entering an incorrect password.;"Given the user is on the login page
+When they enter a valid email but an incorrect password
+Then they should see an error message ""Invalid credentials"""
+The user should be able to register a new account.;"Given the user is on the registration page
+When they enter all required details correctly
+And they click on the ""Sign Up"" button
+Then their account should be created successfully"
+The system should not allow duplicate email registrations.;"Given the user is on the registration page
+When they enter an email that is already registered
+Then they should see an error message ""Email already in use"""
+The user should receive a confirmation email after registration.;"Given the user has successfully registered
+Then they should receive an email with a confirmation link"
+The user should be able to update their profile information.;"Given the user is logged in
+When they navigate to the profile page
+And they update their details
+Then their profile should be updated successfully"
+The user should not be able to register with a weak password.;"Given the user is on the registration page
+When they enter a password shorter than 8 characters
+Then they should see an error message ""Password too weak"""
+The user should be logged out after inactivity for 30 minutes.;"Given the user is logged in
+When they are inactive for 30 minutes
+Then they should be logged out automatically"
+The user should be able to change their password.;"Given the user is logged in
+When they navigate to the change password page
+And they enter their current password and a new password
+Then their password should be updated successfully"
+The system should not allow login attempts after 5 failed tries.;"Given the user has entered the wrong password 5 times
+When they try to log in again
+Then they should see a message ""Account locked. Try again later"""
+The user should be able to delete their account.;"Given the user is logged in
+When they navigate to account settings
+And they click on ""Delete Account""
+Then their account should be permanently deleted"
+The system should support multi-language options.;"Given the user is on the settings page
+When they select a different language
+Then the application should update to the selected language"
+The system should display a 404 page for non-existent URLs.;"Given the user enters a non-existent URL
+Then they should see a 404 error page"
+The user should be able to upload a profile picture.;"Given the user is on the profile page
+When they select an image and click ""Upload""
+Then their profile picture should be updated"
+The user should be able to add items to their shopping cart.;"Given the user is viewing a product
+When they click on ""Add to Cart""
+Then the item should be added to their cart"
+The system should allow users to apply discount codes at checkout.;"Given the user is at checkout
+When they enter a valid discount code
+Then the total price should be updated accordingly"
+The user should be able to track their order status.;"Given the user has placed an order
+When they navigate to the ""Order History"" page
+Then they should see the current status of their order"
+The admin should be able to approve new user registrations.;"Given an admin is logged in
+When they navigate to the pending registrations page
+And they approve a new user
+Then that user should be able to log in"
+The system should send an email notification when an order is shipped.;"Given the user has placed an order
+When the order is marked as shipped
+Then the user should receive an email notification"
+The user should be able to view their past purchases.;"Given the user is logged in
+When they go to the order history page
+Then they should see a list of their past orders"
+The system should validate email format during registration.;"Given the user is on the registration page
+When they enter an incorrectly formatted email
+Then they should see an error message"
+The user should be able to search for products.;"Given the user is on the home page
+When they enter a keyword in the search bar
+Then they should see relevant product results"
+The system should allow users to filter products by price.;"Given the user is on the product listing page
+When they select a price range filter
+Then only products within that price range should be displayed"

@@ -1,0 +1,8 @@
+/* Center the entire app */
+#root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: var(--background-color);
+}

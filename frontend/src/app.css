@@ -1,0 +1,72 @@
+/* App Container */
+.app-container {
+  max-width: 900px;
+  margin: 50px auto;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px var(--shadow-color);
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 8px;
+}
+
+.navbar h1 {
+  font-size: 24px;
+}
+
+.logout-button {
+  background: white;
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+.logout-button:hover {
+  background: var(--button-hover-color);
+  color: white;
+}
+
+/* Main Content */
+.main-content {
+  margin-top: 20px;
+}
+
+/* Input Section */
+.input-section {
+  margin-bottom: 20px;
+}
+
+.text-area {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Output Section */
+.output-section {
+  background: #fff;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0px 2px 5px var(--shadow-color);
+  min-height: 100px;
+  font-family: monospace;
+}
+
+/* Generate Button */
+.generate-button {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Add to Squash Button */
+.add-to-squash-section {
+  text-align: center;
+  margin-top: 15px;
+}
