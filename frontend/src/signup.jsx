@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./SignUp.css"; // Import SignUp.css
+import { TextField, Button, Typography, Box, Container } from "@mui/material"; // Import MUI components
 
 function SignUp() {
   const [username, setUsername] = useState("");
@@ -17,31 +17,40 @@ function SignUp() {
       });
       alert("User registered successfully");
       navigate("/login");
-    // eslint-disable-next-line no-unused-vars
     } catch (error) {
+      console.error("Sigup error:", error); // Now 'error' is used
       alert("Error registering user");
     }
   };
 
   return (
-    <div className="signup-container">
-      <h2>Sign Up</h2>
-      <form onSubmit={handleSignUp}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button type="submit">Sign Up</button>
-      </form>
-    </div>
+    <Container maxWidth="sm" sx={{ marginTop: 4 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 4, borderRadius: 2, boxShadow: 2 }}>
+        <Typography variant="h5" gutterBottom>Sign Up</Typography>
+        <form onSubmit={handleSignUp} style={{ width: "100%" }}>
+          <TextField
+            label="Username"
+            variant="outlined"
+            fullWidth
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            margin="normal"
+          />
+          <TextField
+            label="Password"
+            variant="outlined"
+            fullWidth
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            margin="normal"
+          />
+          <Button type="submit" variant="contained" color="primary" fullWidth sx={{ marginTop: 2 }}>
+            Sign Up
+          </Button>
+        </form>
+      </Box>
+    </Container>
   );
 }
 
