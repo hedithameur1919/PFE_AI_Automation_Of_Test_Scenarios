@@ -1,62 +1,52 @@
-import { Button, Box, Typography, Container, AppBar, Toolbar, CssBaseline } from "@mui/material";
+import {
+  Button, Box, Typography, Container, AppBar, Toolbar, CssBaseline, useTheme
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "@mui/material/styles";
 
 function LandingPage() {
   const navigate = useNavigate();
   const theme = useTheme();
 
   const handleSignIn = () => navigate("/login");
-  const handleSignUp = () => navigate("/signup");
 
   return (
     <>
       <CssBaseline />
-
-      {/* Navbar */}
       <AppBar position="static" color="transparent" elevation={0}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography variant="h6" fontWeight={700}>
             AI Squash
           </Typography>
-          <Box>
-            <Button color="primary" onClick={handleSignIn}>Sign In</Button>
-            <Button variant="contained" sx={{ ml: 2 }} onClick={handleSignUp}>Sign Up</Button>
-          </Box>
+          <Button color="primary" onClick={handleSignIn}>Sign In</Button>
         </Toolbar>
       </AppBar>
 
-      {/* Hero Section */}
       <Box
         sx={{
-          minHeight: "80vh",
+          minHeight: "85vh",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: `linear-gradient(120deg, ${theme.palette.primary.light}, ${theme.palette.secondary.light})`,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+          color: "#fff",
           textAlign: "center",
-          padding: 5,
+          p: 5,
         }}
       >
         <Container maxWidth="md">
-          <Typography variant="h3" sx={{ fontWeight: 700, color: theme.palette.primary.contrastText }}>
-            Welcome to AI Automation in Squash
+          <Typography variant="h2" fontWeight={800} gutterBottom>
+            AI-Powered Scenario Automation
           </Typography>
-          <Typography variant="h6" sx={{ color: theme.palette.primary.contrastText, mt: 2 }}>
-            Boost your productivity with AI-generated Gherkin scenarios. Smart. Fast. Reliable.
+          <Typography variant="h6" mb={4}>
+            Accelerate test scenario creation with smart AI-driven Gherkin generators.
           </Typography>
-          <Box sx={{ marginTop: 4 }}>
-            <Button variant="contained" size="large" sx={{ marginRight: 2 }} onClick={handleSignIn}>
-              Get Started
-            </Button>
-            <Button variant="outlined" size="large" onClick={handleSignUp}>
-              Create Account
-            </Button>
-          </Box>
+          <Button variant="contained" size="large" sx={{ px: 4, py: 1.5 }} onClick={handleSignIn}>
+            Get Started
+          </Button>
         </Container>
       </Box>
 
-      {/* Footer */}
       <Box sx={{ py: 3, textAlign: "center", bgcolor: "background.paper" }}>
         <Typography variant="body2" color="text.secondary">
           © {new Date().getFullYear()} AI Squash. All rights reserved.

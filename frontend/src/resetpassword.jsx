@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { TextField, Button, Typography, Box, Container } from "@mui/material";
+import {
+  TextField, Button, Typography, Container, Paper, CssBaseline
+} from "@mui/material";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
@@ -11,7 +13,6 @@ function ResetPassword() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Extract the token from the URL query parameters
   const queryParams = new URLSearchParams(location.search);
   const token = queryParams.get("token");
 
@@ -20,7 +21,6 @@ function ResetPassword() {
     setLoading(true);
     setErrorMessage("");
 
-    // Check if passwords match
     if (newPassword !== confirmPassword) {
       setErrorMessage("Passwords do not match.");
       setLoading(false);
@@ -28,70 +28,69 @@ function ResetPassword() {
     }
 
     try {
-      // Send the reset password request with the token, new password, and confirm password
       await axios.post("http://localhost:8000/reset-password", {
-        token, // JWT token
-        new_password: newPassword, // New password
-        confirm_password: confirmPassword, // Confirm new password
+        token, new_password: newPassword, confirm_password: confirmPassword,
       });
 
       alert("Password reset successful!");
-      navigate("/login"); // Redirect to login page after successful password reset
+      navigate("/login");
     } catch (error) {
-      console.error("Error resetting password:", error);
-      setErrorMessage("Error resetting password. Please try again.");
+      console.error("Reset error:", error);
+      setErrorMessage("Error resetting password.");
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Redirect to landing page if token is missing in the URL
-    if (!token) {
-      navigate("/landing");
-    }
+    if (!token) navigate("/landing");
   }, [token, navigate]);
 
   return (
-    <Container maxWidth="sm" sx={{ marginTop: 4 }}>
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 4, borderRadius: 2, boxShadow: 2 }}>
-        <Typography variant="h5" gutterBottom>Reset Password</Typography>
-        <form onSubmit={handleResetPassword} style={{ width: "100%" }}>
-          <TextField
-            label="New Password"
-            variant="outlined"
-            fullWidth
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            margin="normal"
-          />
-          <TextField
-            label="Confirm Password"
-            variant="outlined"
-            fullWidth
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            margin="normal"
-          />
-          {errorMessage && (
-            <Typography color="error" sx={{ marginTop: 2 }}>
-              {errorMessage}
-            </Typography>
-          )}
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ marginTop: 2 }}
-            disabled={loading}
-          >
-            {loading ? "Resetting..." : "Reset Password"}
-          </Button>
-        </form>
-      </Box>
-    </Container>
+    <>
+      <CssBaseline />
+      <Container maxWidth="sm">
+        <Paper elevation={6} sx={{ padding: 5, mt: 8, borderRadius: 3, textAlign: "center" }}>
+          <Typography variant="h4" fontWeight={700} gutterBottom>
+            Reset Password
+          </Typography>
+          <form onSubmit={handleResetPassword}>
+            <TextField
+              label="New Password"
+              type="password"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <TextField
+              label="Confirm Password"
+              type="password"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+            {errorMessage && (
+              <Typography color="error" mt={1}>
+                {errorMessage}
+              </Typography>
+            )}
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              size="large"
+              sx={{ mt: 3 }}
+              disabled={loading}
+            >
+              {loading ? "Resetting..." : "Reset Password"}
+            </Button>
+          </form>
+        </Paper>
+      </Container>
+    </>
   );
 }
 
