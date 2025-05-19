@@ -271,10 +271,6 @@ def create_rating(req: RatingRequest, db: Session = Depends(get_db), current_use
 
 
 
-
-
-
-
 # ---------------- Admin Stats ----------------
 @app.get("/admin/stats")
 def get_admin_stats(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -363,3 +359,5 @@ def delete_user(user_id: int, db: Session = Depends(get_db), current_user: User 
 
 
 
+# ---------------- Manage Test Scenarios in the admin ----------------
+# ---------------- Manage Test Requirements in the admin ----------------

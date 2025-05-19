@@ -13,7 +13,6 @@ import {
   Grid,
   IconButton,
   Tooltip,
-  //TextField,
 } from "@mui/material";
 import { jsPDF } from "jspdf";
 import axios from "axios";
@@ -30,12 +29,10 @@ function Home() {
   const [translatedOutput, setTranslatedOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [translating, setTranslating] = useState(false);
-  //const [requirementId, setRequirementId] = useState(null);
   const [scenarioId, setScenarioId] = useState(null);
   const [ratingValue, setRatingValue] = useState("");
 
   const navigate = useNavigate();
-
   const token = localStorage.getItem("token");
 
   const axiosInstance = axios.create({
@@ -55,18 +52,13 @@ function Home() {
       alert("Please enter a requirement first!");
       return;
     }
-
     setLoading(true);
     try {
-      // Save the requirement
       const reqResponse = await axiosInstance.post("/requirements/", {
         requirement_text: input,
       });
-
       const newRequirementId = reqResponse.data.requirement_id;
-      //setRequirementId(newRequirementId);
 
-      // Generate the scenario
       const scenarioResponse = await axios.post("http://localhost:8000/generate-test-scenario/", {
         requirement: input,
       });
@@ -77,15 +69,12 @@ function Home() {
       setOutput(generatedScenario);
       setTranslatedOutput("");
 
-      // Save the generated scenario
       const saveScenarioResponse = await axiosInstance.post("/test-scenarios/", {
         requirement_id: newRequirementId,
         scenario_text: generatedScenario,
       });
 
-      const newScenarioId = saveScenarioResponse.data.scenario_id;
-      setScenarioId(newScenarioId);
-
+      setScenarioId(saveScenarioResponse.data.scenario_id);
     } catch (error) {
       console.error("Generation error:", error);
       alert("Error generating scenario!");
@@ -141,7 +130,7 @@ function Home() {
       alert("Please enter a rating between 1 and 5.");
       return;
     }
-  
+
     try {
       await axiosInstance.post("/ratings/", {
         scenario_id: scenarioId,
@@ -154,12 +143,10 @@ function Home() {
       alert(error.response?.data?.detail || "Error submitting rating.");
     }
   };
-  
 
   return (
     <>
       <CssBaseline />
-
       <AppBar position="static" color="primary" elevation={2}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography variant="h6" fontWeight="600">
@@ -173,92 +160,78 @@ function Home() {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ mt: 5 }}>
-        <Paper sx={{ p: 4, borderRadius: 3, boxShadow: 6 }}>
+      <Container maxWidth={false} sx={{ mt: 5 }}>
+        <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 6 }}>
           <Grid container spacing={4}>
-            {/* Input Section */}
-            <Grid item xs={12} md={5}>
-              <Typography variant="h6" gutterBottom>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" fontWeight="600" gutterBottom>
                 📌 Requirement
               </Typography>
               <TextareaAutosize
-                minRows={12}
+                minRows={15}
                 placeholder="Describe your requirement..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "14px",
+                  padding: "16px",
                   border: "1px solid #ced4da",
                   borderRadius: "8px",
-                  fontSize: "16px",
-                  resize: "vertical",
+                  fontSize: "20px",
+                  resize: "none",
                   fontFamily: "Roboto, sans-serif",
                 }}
               />
+              <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={generateScenario}
+                  disabled={loading}
+                  startIcon={<PlayArrowIcon />}
+                  sx={{ minWidth: 150 }}
+                >
+                  {loading ? "Generating..." : "Generate"}
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  onClick={exportToCSV}
+                  sx={{ minWidth: 150 }}
+                >
+                  Export CSV
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  onClick={exportToTXT}
+                  sx={{ minWidth: 150 }}
+                >
+                  Export TXT
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<DownloadIcon />}
+                  onClick={exportToPDF}
+                  sx={{ minWidth: 150 }}
+                >
+                  Export PDF
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleTranslate}
+                  disabled={translating}
+                  startIcon={<TranslateIcon />}
+                  sx={{ minWidth: 150 }}
+                >
+                  {translating ? "Translating..." : "Translate"}
+                </Button>
+              </Box>
             </Grid>
 
-            {/* Action Buttons */}
-            <Grid
-              item
-              xs={12}
-              md={2}
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "center",
-                gap: 2,
-              }}
-            >
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={generateScenario}
-                disabled={loading}
-                startIcon={<PlayArrowIcon />}
-              >
-                {loading ? "Generating..." : "Generate"}
-              </Button>
-
-              {output && (
-                <>
-                  <Button
-                    variant="outlined"
-                    startIcon={<DownloadIcon />}
-                    onClick={exportToCSV}
-                  >
-                    CSV
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<DownloadIcon />}
-                    onClick={exportToTXT}
-                  >
-                    TXT
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    startIcon={<DownloadIcon />}
-                    onClick={exportToPDF}
-                  >
-                    PDF
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={handleTranslate}
-                    disabled={translating}
-                    startIcon={<TranslateIcon />}
-                  >
-                    {translating ? "Translating..." : "Translate"}
-                  </Button>
-                </>
-              )}
-            </Grid>
-
-            {/* Output Section */}
-            <Grid item xs={12} md={5}>
-              <Typography variant="h6" gutterBottom>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" fontWeight="600" gutterBottom>
                 ✅ Generated Scenario
               </Typography>
               <Box
@@ -266,66 +239,44 @@ function Home() {
                   bgcolor: "#f9f9f9",
                   borderRadius: 2,
                   p: 2,
-                  minHeight: "250px",
-                  overflow: "auto",
+                  height: "400px",
+                  overflowY: "auto",
                 }}
               >
-                <pre
-                  style={{
-                    fontFamily: "monospace",
-                    fontSize: "16px",
-                    margin: 0,
-                  }}
-                >
+                <pre style={{ fontFamily: "monospace", fontSize: "20px", margin: 0 }}>
                   {output || "Generated scenario will appear here..."}
                 </pre>
               </Box>
 
               {translatedOutput && (
-                <Box
-                  sx={{
-                    bgcolor: "#e6f4ea",
-                    borderRadius: 2,
-                    p: 2,
-                    mt: 2,
-                  }}
-                >
-                  <Typography variant="h6">🇫🇷 Translated Scenario</Typography>
-                  <pre
-                    style={{
-                      fontFamily: "monospace",
-                      fontSize: "16px",
-                      margin: 0,
-                    }}
-                  >
+                <Box sx={{ bgcolor: "#e6f4ea", borderRadius: 2, p: 2, mt: 2 }}>
+                  <Typography variant="subtitle1" fontWeight="600">
+                    🇫🇷 Translated
+                  </Typography>
+                  <pre style={{ fontFamily: "monospace", fontSize: "20px", margin: 0 }}>
                     {translatedOutput}
                   </pre>
                 </Box>
               )}
 
               {output && (
-                <Box sx={{ mt: 3, display: "flex", alignItems: "center", gap: 1 }}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <IconButton
-                    key={star}
-                    onClick={() => submitRating(star)}
-                    sx={{ color: star <= ratingValue ? "#FFD700" : "#ccc", p: 0.5 }}
-                  >
-                    <StarIcon />
-                  </IconButton>
-                ))}
+                <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <IconButton
+                      key={star}
+                      onClick={() => submitRating(star)}
+                      sx={{ color: star <= ratingValue ? "#FFD700" : "#ccc", p: 0.5 }}
+                    >
+                      <StarIcon />
+                    </IconButton>
+                  ))}
                 </Box>
-              
               )}
             </Grid>
           </Grid>
         </Paper>
 
-        <Typography
-          variant="body2"
-          align="center"
-          sx={{ mt: 4, color: "text.secondary" }}
-        >
+        <Typography variant="body2" align="center" sx={{ mt: 4, color: "text.secondary" }}>
           © {new Date().getFullYear()} AI Squash. All rights reserved.
         </Typography>
       </Container>
