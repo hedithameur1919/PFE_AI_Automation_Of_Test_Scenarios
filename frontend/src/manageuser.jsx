@@ -26,7 +26,6 @@ import {
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PeopleIcon from "@mui/icons-material/People";
 import DescriptionIcon from "@mui/icons-material/Description";
-import FeedbackIcon from "@mui/icons-material/Feedback";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -45,9 +44,7 @@ function ManageUser() {
   const menuItems = [
     { text: "Dashboard Overview", icon: <DashboardIcon />, path: "/admin" },
     { text: "Manage Users", icon: <PeopleIcon />, path: "/admin/users" },
-    { text: "Manage Test Scenarios", icon: <DescriptionIcon />, path: "/admin/scenarios" },
-    { text: "Manage Test Requirments", icon: <DescriptionIcon />, path: "/admin/requirements" },
-    { text: "Ratings", icon: <FeedbackIcon />, path: "/admin/ratings" },
+    { text: "Manage Test Requirements", icon: <DescriptionIcon />, path: "/admin/requirements" },
   ];
 
   const handleLogout = () => {

@@ -28,17 +28,17 @@ class Requirement(Base):
     requirement_text: Mapped[str] = mapped_column(String(1000), nullable=False)
 
     user = relationship("User", back_populates="requirements")
-    scenario = relationship("TestScenario", back_populates="requirement", uselist=False)  # One-to-one now
+    scenario = relationship("TestScenario", back_populates="requirement", uselist=False, cascade="all, delete-orphan")  # cascade added
 
 class TestScenario(Base):
     __tablename__ = 'testscenario'
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    requirement_id: Mapped[int] = mapped_column(ForeignKey("requirement.id"), unique=True, nullable=False)  # unique=True enforces one-to-one
+    requirement_id: Mapped[int] = mapped_column(ForeignKey("requirement.id", ondelete="CASCADE"), unique=True, nullable=False)
     scenario_text: Mapped[str] = mapped_column(String(3000), nullable=False)
 
     requirement = relationship("Requirement", back_populates="scenario")
-    rating = relationship("Rating", back_populates="scenario", uselist=False)  # already one-to-one
+    rating = relationship("Rating", back_populates="scenario", uselist=False, cascade="all, delete-orphan")  # cascade added
 
 class Rating(Base):
     __tablename__ = 'rating'

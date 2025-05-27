@@ -13,6 +13,10 @@ import {
   Grid,
   IconButton,
   Tooltip,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
 } from "@mui/material";
 import { jsPDF } from "jspdf";
 import axios from "axios";
@@ -31,6 +35,13 @@ function Home() {
   const [translating, setTranslating] = useState(false);
   const [scenarioId, setScenarioId] = useState(null);
   const [ratingValue, setRatingValue] = useState("");
+  const [squashUsername, setSquashUsername] = useState("");
+  const [squashPassword, setSquashPassword] = useState("");
+  const [squashProjects, setSquashProjects] = useState([]);
+  const [showSquashSection, setShowSquashSection] = useState(false);
+  const [loadingSquash, setLoadingSquash] = useState(false);
+  const [scenarioType, setScenarioType] = useState("positive");
+
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -61,6 +72,7 @@ function Home() {
 
       const scenarioResponse = await axios.post("http://localhost:8000/generate-test-scenario/", {
         requirement: input,
+        type: scenarioType,
       });
 
       let generatedScenario = scenarioResponse.data.gherkin_scenario || "No scenario generated.";
@@ -80,6 +92,40 @@ function Home() {
       alert("Error generating scenario!");
     }
     setLoading(false);
+  };
+  //squash 
+  const handleSquashIntegration = async () => {
+    if (!squashUsername || !squashPassword) {
+      alert("Please enter Squash TM credentials");
+      return;
+    }
+
+    setLoadingSquash(true);
+    try {
+      // First: Login check
+      const loginRes = await axios.post("http://localhost:8000/squash/login", {}, {
+        auth: {
+          username: squashUsername,
+          password: squashPassword,
+        },
+      });
+
+      if (loginRes.data.message === "Login successful") {
+        // Second: Fetch projects
+        const projectsRes = await axios.post("http://localhost:8000/squash/projects", {}, {
+          auth: {
+            username: squashUsername,
+            password: squashPassword,
+          },
+        });
+
+        setSquashProjects(projectsRes.data || []);
+      }
+    } catch (error) {
+      console.error("Squash Integration Error:", error);
+      alert("Failed to connect to Squash TM. Check credentials.");
+    }
+    setLoadingSquash(false);
   };
 
   const handleTranslate = async () => {
@@ -182,6 +228,18 @@ function Home() {
                   fontFamily: "Roboto, sans-serif",
                 }}
               />
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel id="scenario-type-label">Scenario Type</InputLabel>
+                <Select
+                  labelId="scenario-type-label"
+                  value={scenarioType}
+                  label="Scenario Type"
+                  onChange={(e) => setScenarioType(e.target.value)}
+                >
+                  <MenuItem value="positive">Positive</MenuItem>
+                  <MenuItem value="negative">Negative</MenuItem>
+                </Select>
+              </FormControl>
               <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 1 }}>
                 <Button
                   variant="contained"
@@ -260,18 +318,78 @@ function Home() {
               )}
 
               {output && (
-                <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <IconButton
-                      key={star}
-                      onClick={() => submitRating(star)}
-                      sx={{ color: star <= ratingValue ? "#FFD700" : "#ccc", p: 0.5 }}
+                <>
+                  <Box sx={{ mt: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <IconButton
+                        key={star}
+                        onClick={() => submitRating(star)}
+                        sx={{ color: star <= ratingValue ? "#FFD700" : "#ccc", p: 0.5 }}
+                      >
+                        <StarIcon />
+                      </IconButton>
+                    ))}
+                  </Box>
+                  <Box sx={{ mt: 2 }}>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      onClick={() => setShowSquashSection(!showSquashSection)}
                     >
-                      <StarIcon />
-                    </IconButton>
-                  ))}
+                      {showSquashSection ? "Hide Squash Integration" : "Add to Squash"}
+                    </Button>
+                  </Box>
+                </>
+              )}
+
+
+              {showSquashSection && (
+                <Box sx={{ mt: 2, p: 2, border: "1px solid #ccc", borderRadius: 2 }}>
+                  <Typography variant="subtitle1" fontWeight="600">
+                    🔐 Squash TM Credentials
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+                    <input
+                      type="text"
+                      placeholder="Username"
+                      value={squashUsername}
+                      onChange={(e) => setSquashUsername(e.target.value)}
+                      style={{ padding: 8, borderRadius: 4, border: "1px solid #aaa", fontSize: 16 }}
+                    />
+                    <input
+                      type="password"
+                      placeholder="Password"
+                      value={squashPassword}
+                      onChange={(e) => setSquashPassword(e.target.value)}
+                      style={{ padding: 8, borderRadius: 4, border: "1px solid #aaa", fontSize: 16 }}
+                    />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      onClick={handleSquashIntegration}
+                      disabled={loadingSquash}
+                    >
+                      {loadingSquash ? "Connecting..." : "Fetch Projects"}
+                    </Button>
+                  </Box>
+
+                  {squashProjects.length > 0 && (
+                    <Box sx={{ mt: 3 }}>
+                      <Typography variant="subtitle1" fontWeight="600">
+                        📁 Available Projects
+                      </Typography>
+                      <ul>
+                        {squashProjects.map((project) => (
+                          <li key={project.id}>
+                            <strong>{project.name}</strong> (ID: {project.id})
+                          </li>
+                        ))}
+                      </ul>
+                    </Box>
+                  )}
                 </Box>
               )}
+
             </Grid>
           </Grid>
         </Paper>

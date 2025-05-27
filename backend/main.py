@@ -1,6 +1,6 @@
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from pydantic import BaseModel, EmailStr
@@ -13,16 +13,18 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import logging
 import models
-from models import User
 from models import Requirement, TestScenario, Rating, User
 from database import SessionLocal
 from ai_generation import generate_gherkin_scenario
 from typing import List, Optional
+from requests.auth import HTTPBasicAuth
+import requests
 
 
 
 # ---------------- FastAPI App Setup ----------------
 app = FastAPI()
+security = HTTPBasic()
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,6 +38,10 @@ SECRET_KEY = "6c3fd78f765d0a5002e323b0fa5f8e7ee31328031bb5f1afd31ed3b4f5b92858"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+# Squash url
+SQUASH_BASE_URL = "http://localhost:8081/squash/api/rest/latest"
+
 
 # Gmail credentials
 GMAIL_USER = "hedithameur1919@gmail.com"
@@ -116,9 +122,14 @@ class ScenarioRequest(BaseModel):
 class RatingRequest(BaseModel):
     scenario_id: int
     rating: int
-
-class Config:
-    from_attributes = True
+    
+class RequirementResponse(BaseModel):
+    id: int
+    user_id: int
+    requirement_text: str
+    
+    class Config:
+        from_attributes = True
 
 
 # ---------------- Get the current user's informations ----------------
@@ -223,12 +234,54 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
         raise HTTPException(status_code=401, detail="Invalid reset token")
 
 # ---------------- AI Test Scenario ----------------
+'''
+thi function is without the type of scenario positve/negative
 @app.post("/generate-test-scenario", response_model=TestScenarioResponse)
 def generate_test_scenario(request: TestScenarioRequest):
     scenario = generate_gherkin_scenario(request.requirement)
     if scenario.startswith("Error"):
         raise HTTPException(status_code=500, detail=scenario)
+    return {"gherkin_scenario": scenario}'''
+
+@app.post("/generate-test-scenario/")
+def generate_test_scenario(requirement: str = Body(...), type: str = Body("positive")):
+    scenario = generate_gherkin_scenario(requirement, type)
+    if scenario.startswith("Error"):
+        raise HTTPException(status_code=500, detail=scenario)
     return {"gherkin_scenario": scenario}
+
+# -----------Squash Part -----------
+@app.post("/squash/login")
+def login_squash(credentials: HTTPBasicCredentials = Depends(security)):
+    try:
+        response = requests.get(
+            f"{SQUASH_BASE_URL}/projects?page=0&size=1",
+            auth=HTTPBasicAuth(credentials.username, credentials.password),
+            timeout=5
+        )
+        if response.status_code == 200:
+            return {"message": "Login successful"}
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    except requests.RequestException:
+        raise HTTPException(status_code=500, detail="Error connecting to Squash TM")
+
+@app.post("/squash/projects")
+def get_squash_projects(credentials: HTTPBasicCredentials = Depends(security)):
+    try:
+        response = requests.get(
+            f"{SQUASH_BASE_URL}/projects?page=0&size=20",
+            auth=HTTPBasicAuth(credentials.username, credentials.password),
+            timeout=5
+        )
+        if response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Unauthorized")
+
+        data = response.json()
+        projects = data.get("_embedded", {}).get("projects", [])
+        return [{"id": p["id"], "name": p["name"]} for p in projects]
+
+    except requests.RequestException:
+        raise HTTPException(status_code=500, detail="Error retrieving projects from Squash TM")
 
 # ---------------- Requirement, Test scenarios and ratings in the frontend by the user ----------------
 
@@ -356,8 +409,27 @@ def delete_user(user_id: int, db: Session = Depends(get_db), current_user: User 
     db.commit()
     return {"message": "User deleted successfully"}
 
+# ---------------- Manage Test Requirements in the admin ----------------
 
+@app.get("/admin/requirements", response_model=List[RequirementResponse])
+def get_requirements(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access only")
 
+    requirements = db.query(Requirement).all()
+    return requirements
+
+@app.delete("/admin/requirements/{requirement_id}")
+def delete_requirement(requirement_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access only")
+
+    requirement = db.query(Requirement).filter(Requirement.id == requirement_id).first()
+    if not requirement:
+        raise HTTPException(status_code=404, detail="Requirement not found")
+
+    db.delete(requirement)
+    db.commit()
+    return {"message": "Requirement deleted successfully"}
 
 # ---------------- Manage Test Scenarios in the admin ----------------
-# ---------------- Manage Test Requirements in the admin ----------------
