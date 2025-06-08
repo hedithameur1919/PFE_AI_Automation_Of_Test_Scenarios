@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, HTTPBasic, HTTPBasicCredentials
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from pydantic import BaseModel, EmailStr
@@ -19,8 +20,7 @@ from ai_generation import generate_gherkin_scenario
 from typing import List, Optional
 from requests.auth import HTTPBasicAuth
 import requests
-
-
+import re
 
 # ---------------- FastAPI App Setup ----------------
 app = FastAPI()
@@ -234,15 +234,6 @@ def reset_password(request: ResetPasswordRequest, db: Session = Depends(get_db))
         raise HTTPException(status_code=401, detail="Invalid reset token")
 
 # ---------------- AI Test Scenario ----------------
-'''
-thi function is without the type of scenario positve/negative
-@app.post("/generate-test-scenario", response_model=TestScenarioResponse)
-def generate_test_scenario(request: TestScenarioRequest):
-    scenario = generate_gherkin_scenario(request.requirement)
-    if scenario.startswith("Error"):
-        raise HTTPException(status_code=500, detail=scenario)
-    return {"gherkin_scenario": scenario}'''
-
 @app.post("/generate-test-scenario/")
 def generate_test_scenario(requirement: str = Body(...), type: str = Body("positive")):
     scenario = generate_gherkin_scenario(requirement, type)
@@ -282,6 +273,134 @@ def get_squash_projects(credentials: HTTPBasicCredentials = Depends(security)):
 
     except requests.RequestException:
         raise HTTPException(status_code=500, detail="Error retrieving projects from Squash TM")
+
+#--- This is english version
+@app.post("/squash/add-test-case")
+def add_test_case(
+    project_id: int = Body(...),
+    gherkin_script: str = Body(...),
+    credentials: HTTPBasicCredentials = Depends(security),
+):
+    try:
+        # Normalize the Gherkin script
+        script = gherkin_script.replace('"', "'").replace("\n", " ")
+
+        # Extract the scenario name (between "Scenario:" and "Given")
+        if "Scenario:" not in script or "Given" not in script:
+            raise HTTPException(status_code=400, detail="Missing 'Scenario:' or 'Given'")
+        
+        scenario_start = script.index("Scenario:") + len("Scenario:")
+        given_index = script.index("Given", scenario_start)
+        scenario_name = script[scenario_start:given_index].strip()
+
+        # Extract the action steps (from "Given" to "Then")
+        if "Then" not in script:
+            raise HTTPException(status_code=400, detail="Missing 'Then' in Gherkin script")
+        
+        given_index = script.index("Given")
+        then_index = script.index("Then")
+        action = script[given_index:then_index].strip()
+
+        # Extract the expected result (from "Then" to the end)
+        expected_result = script[then_index:].strip()
+
+        # Build the JSON payload
+        payload = {
+            "_type": "test-case",
+            "name": scenario_name,
+            "parent": {
+                "_type": "project",
+                "id": project_id
+            },
+            "steps": [
+                {
+                    "_type": "action-step",
+                    "action": f"<p>{action}</p>",
+                    "expected_result": f"<p>{expected_result}</p>"
+                }
+            ]
+        }
+        # Send to Squash TM
+        response = requests.post(
+            f"{SQUASH_BASE_URL}/test-cases",
+            auth=HTTPBasicAuth(credentials.username, credentials.password),
+            json=payload,
+        )
+
+        if response.status_code == 201:
+            return {"message": "Test case added successfully"}
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.text)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error: {e}")
+
+""" @app.post("/squash/add-test-case")
+def add_test_case(
+    project_id: int = Body(...),
+    gherkin_script: str = Body(...),
+    credentials: HTTPBasicCredentials = Depends(security),
+):
+    try:
+        # Normalize and clean input
+        script = gherkin_script.replace('"', "'").replace("\n", " ")
+        script = " ".join(script.split())
+
+        # Extract parts using regex
+        scenario_match = re.search(r"Scénario\s*:\s*(.*?)\s*Étant donné que", script, re.IGNORECASE)
+        given_when_match = re.search(r"Étant donné que(.*?)Alors", script, re.IGNORECASE)
+        expected_match = re.search(r"Alors(.*)", script, re.IGNORECASE)
+
+        if not scenario_match or not given_when_match or not expected_match:
+            raise HTTPException(
+                status_code=400,
+                detail="Le script doit contenir les parties 'Scénario:', 'Étant donné que', et 'Alors'."
+            )
+
+        scenario_name = scenario_match.group(1).strip()
+        action = "Étant donné que" + given_when_match.group(1).strip()
+        expected_result = "Alors" + expected_match.group(1).strip()
+        
+        # **Ajout des logs ici pour debug**
+        print(f"[DEBUG] scenario_name: {scenario_name}")
+        print(f"[DEBUG] action: {action}")
+        print(f"[DEBUG] expected_result: {expected_result}")
+
+
+        # Payload to Squash
+        payload = {
+            "_type": "test-case",
+            "name": scenario_name,
+            "parent": {
+                "_type": "project",
+                "id": project_id
+            },
+            "steps": [
+                {
+                    "_type": "action-step",
+                    "action": f"<p>{action}</p>",
+                    "expected_result": f"<p>{expected_result}</p>"
+                }
+            ]
+        }
+
+        response = requests.post(
+            f"{SQUASH_BASE_URL}/test-cases",
+            auth=HTTPBasicAuth(credentials.username, credentials.password),
+            json=payload,
+        )
+
+        if response.status_code == 201:
+            return {"message": "Test case added successfully"}
+        else:
+            raise HTTPException(status_code=response.status_code, detail=response.text)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur : {e}") """
+
+
+
+
 
 # ---------------- Requirement, Test scenarios and ratings in the frontend by the user ----------------
 
@@ -432,4 +551,19 @@ def delete_requirement(requirement_id: int, db: Session = Depends(get_db), curre
     db.commit()
     return {"message": "Requirement deleted successfully"}
 
-# ---------------- Manage Test Scenarios in the admin ----------------
+# ---------------- Manage Test Requirement detail in the admin ----------------
+@app.get("/admin/requirements/{requirement_id}", response_model=dict)
+def get_requirement_detail(requirement_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin access only")
+
+    requirement = db.query(Requirement).filter(Requirement.id == requirement_id).first()
+    if not requirement:
+        raise HTTPException(status_code=404, detail="Requirement not found")
+
+    return {
+        "id": requirement.id,
+        "requirement_text": requirement.requirement_text,
+        "scenario": requirement.scenario.scenario_text if requirement.scenario else None,
+        "rating": requirement.scenario.rating.rating if requirement.scenario and requirement.scenario.rating else None
+    }

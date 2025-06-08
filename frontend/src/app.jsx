@@ -9,6 +9,7 @@ import Home from "./home";
 import Admin from "./admin";
 import ManageUser from "./manageuser";
 import ManageRequirement from "./managerequirement";
+import ManageRequirementDetail from "./managerequirementdetail";
 
 // Define custom MUI theme
 const theme = createTheme({
@@ -69,6 +70,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/admin/requirements/:id" 
+          element={
+            <ProtectedRoute requiredRole="admin">
+              <ManageRequirementDetail />
+            </ProtectedRoute>
+          }
+          />
+
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />

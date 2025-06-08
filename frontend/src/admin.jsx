@@ -95,7 +95,12 @@ function Admin() {
         <Box sx={{ overflow: "auto" }}>
           <List>
             {menuItems.map((item) => (
-              <ListItem button key={item.text} onClick={() => navigate(item.path)}>
+              <ListItem 
+                  button 
+                  key={item.text} 
+                  onClick={() => navigate(item.path)} 
+                  sx={{ cursor: "pointer" }}
+              >
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.text} />
               </ListItem>
@@ -103,7 +108,11 @@ function Admin() {
           </List>
           <Divider />
           <List>
-            <ListItem button onClick={handleLogout}>
+            <ListItem 
+              button 
+              onClick={handleLogout}
+              sx={{ cursor: "pointer" }}
+            >
               <ListItemIcon><ExitToAppIcon /></ListItemIcon>
               <ListItemText primary="Logout" />
             </ListItem>

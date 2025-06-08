@@ -41,6 +41,8 @@ function Home() {
   const [showSquashSection, setShowSquashSection] = useState(false);
   const [loadingSquash, setLoadingSquash] = useState(false);
   const [scenarioType, setScenarioType] = useState("positive");
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+
 
 
   const navigate = useNavigate();
@@ -127,6 +129,36 @@ function Home() {
     }
     setLoadingSquash(false);
   };
+  //Add test case squash part
+  const handleAddToSquash = async () => {
+    if (!output || !selectedProjectId || !squashUsername || !squashPassword) {
+      alert("Please make sure a scenario is generated, a project is selected, and credentials are provided.");
+      return;
+    }
+
+    try {
+      const response = await axios.post("http://localhost:8000/squash/add-test-case", {
+        project_id: selectedProjectId,
+        gherkin_script: output
+      }, {
+        auth: {
+          username: squashUsername,
+          password: squashPassword,
+        },
+      });
+
+      if (response.data.message === "Test case added successfully") {
+        alert("Scenario added to Squash TM successfully!");
+      } else {
+        alert("Failed to add scenario to Squash.");
+      }
+    } catch (error) {
+      console.error("Error adding scenario to Squash:", error);
+      alert("Error adding scenario to Squash. Check credentials or project selection.");
+    }
+};
+
+//Squash part ends here
 
   const handleTranslate = async () => {
     setTranslating(true);
@@ -378,22 +410,37 @@ function Home() {
                       <Typography variant="subtitle1" fontWeight="600">
                         📁 Available Projects
                       </Typography>
-                      <ul>
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}>
                         {squashProjects.map((project) => (
-                          <li key={project.id}>
-                            <strong>{project.name}</strong> (ID: {project.id})
-                          </li>
+                          <Button
+                            key={project.id}
+                            variant={selectedProjectId === project.id ? "contained" : "outlined"}
+                            color="secondary"
+                            onClick={() => setSelectedProjectId(project.id)}
+                          >
+                            {project.name}
+                          </Button>
                         ))}
-                      </ul>
+                      </Box>
+                    </Box>
+                  )}
+
+                  {output && selectedProjectId && (
+                    <Box sx={{ mt: 3 }}>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={handleAddToSquash}
+                      >
+                        ➕ Add Scenario to Selected Project
+                      </Button>
                     </Box>
                   )}
                 </Box>
               )}
-
             </Grid>
           </Grid>
         </Paper>
-
         <Typography variant="body2" align="center" sx={{ mt: 4, color: "text.secondary" }}>
           © {new Date().getFullYear()} AI Squash. All rights reserved.
         </Typography>

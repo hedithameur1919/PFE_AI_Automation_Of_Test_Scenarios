@@ -101,7 +101,12 @@ function ManageRequirement() {
         <Box sx={{ overflow: "auto" }}>
           <List>
             {menuItems.map((item) => (
-              <ListItem button key={item.text} onClick={() => navigate(item.path)}>
+              <ListItem 
+                  button 
+                  key={item.text} 
+                  onClick={() => navigate(item.path)} 
+                  sx={{ cursor: "pointer" }}
+              >
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.text} />
               </ListItem>
@@ -109,7 +114,11 @@ function ManageRequirement() {
           </List>
           <Divider />
           <List>
-            <ListItem button onClick={handleLogout}>
+            <ListItem 
+              button 
+              onClick={handleLogout}
+              sx={{ cursor: "pointer" }}
+            >
               <ListItemIcon>
                 <ExitToAppIcon />
               </ListItemIcon>
@@ -141,7 +150,20 @@ function ManageRequirement() {
                   <TableRow key={req.id}>
                     <TableCell>{req.id}</TableCell>
                     <TableCell>{req.user_id}</TableCell>
-                    <TableCell>{req.requirement_text}</TableCell>
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: "primary.main",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          "&:hover": { color: "primary.dark" },
+                        }}
+                        onClick={() => navigate(`/admin/requirements/${req.id}`)}
+                      >
+                        {req.requirement_text}
+                      </Typography>
+                    </TableCell>
                     <TableCell>
                       <IconButton color="error" onClick={() => handleDelete(req.id)}>
                         <DeleteIcon />
