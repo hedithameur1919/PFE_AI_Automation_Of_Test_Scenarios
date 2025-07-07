@@ -1,4 +1,4 @@
-import {
+/* import {
     AppBar,
     Box,
     Container,
@@ -178,3 +178,195 @@ const ManageRequirementDetail = () => {
 };
 
 export default ManageRequirementDetail;
+ */
+
+import * as React from 'react';
+import {
+  Box,
+  CssBaseline,
+  Stack,
+  Typography,
+  Grid,
+  Paper,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Button,
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import axios from 'axios';
+
+import AppNavbar from './components/AppNavbar';
+import AppTheme from '../shared-theme/AppTheme';
+
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PeopleIcon from '@mui/icons-material/People';
+import DescriptionIcon from '@mui/icons-material/Description';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+
+import {
+  chartsCustomizations,
+  dataGridCustomizations,
+  datePickersCustomizations,
+  treeViewCustomizations,
+} from './theme/customizations';
+
+const drawerWidth = 240;
+const xThemeComponents = {
+  ...chartsCustomizations,
+  ...dataGridCustomizations,
+  ...datePickersCustomizations,
+  ...treeViewCustomizations,
+};
+
+export default function ManageRequirementDetail() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [requirement, setRequirement] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/landing');
+  };
+
+  const menuItems = [
+    { text: 'Dashboard Overview', icon: <DashboardIcon />, path: '/admin' },
+    { text: 'Manage Users', icon: <PeopleIcon />, path: '/admin/users' },
+    { text: 'Manage Test Requirements', icon: <DescriptionIcon />, path: '/admin/requirements' },
+  ];
+
+  const fetchRequirementDetail = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.get(`http://localhost:8000/admin/requirements/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRequirement(res.data);
+    } catch (err) {
+      console.error('Failed to fetch requirement details', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete this requirement?')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`http://localhost:8000/admin/requirements/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert('Requirement deleted successfully.');
+      navigate('/admin/requirements');
+    // eslint-disable-next-line no-unused-vars
+    } catch (err) {
+      alert('Error deleting requirement.');
+    }
+  };
+
+  React.useEffect(() => {
+    fetchRequirementDetail();
+  }, [id]);
+
+  if (loading) return <Typography variant="body1" sx={{ p: 4 }}>Loading...</Typography>;
+
+  return (
+    <AppTheme themeComponents={xThemeComponents}>
+      <CssBaseline enableColorScheme />
+      <Box sx={{ display: 'flex' }}>
+        <Box
+          component="nav"
+          sx={{
+            width: drawerWidth,
+            flexShrink: 0,
+          }}
+        >
+          <Box
+            sx={{
+              width: drawerWidth,
+              height: '100vh',
+              bgcolor: '#f5f5f5',
+              boxShadow: 3,
+              pt: 8,
+            }}
+          >
+            <List>
+              {menuItems.map((item) => (
+                <ListItem
+                  button
+                  key={item.text}
+                  selected={location.pathname === item.path}
+                  onClick={() => navigate(item.path)}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItem>
+              ))}
+            </List>
+            <Divider sx={{ my: 1 }} />
+            <List>
+              <ListItem button onClick={handleLogout}>
+                <ListItemIcon><ExitToAppIcon /></ListItemIcon>
+                <ListItemText primary="Logout" />
+              </ListItem>
+            </List>
+          </Box>
+        </Box>
+
+        <Box sx={{ flexGrow: 1 }}>
+          <AppNavbar />
+          <Box
+            component="main"
+            sx={(theme) => ({
+              backgroundColor: theme.vars
+                ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
+                : alpha(theme.palette.background.default, 1),
+              minHeight: '100vh',
+              p: 4,
+              mt: 8,
+            })}
+          >
+            <Stack spacing={2} alignItems="center">
+              <Typography variant="h4" fontWeight="600">
+                📝 Requirement Detail
+              </Typography>
+
+              <Grid container spacing={3} sx={{ maxWidth: '1000px' }}>
+                <Grid item xs={12}>
+                  <Paper elevation={3} sx={{ p: 3 }}>
+                    <Typography variant="h6">📋 Requirement</Typography>
+                    <Typography variant="body1" sx={{ mb: 2 }}>
+                      {requirement.requirement_text}
+                    </Typography>
+
+                    <Typography variant="h6">🧪 Test Scenario</Typography>
+                    <Paper variant="outlined" sx={{ p: 2, backgroundColor: '#f0f0f0', mb: 2 }}>
+                      <Typography variant="body2">
+                        {requirement.scenario ? requirement.scenario : 'No scenario available.'}
+                      </Typography>
+                    </Paper>
+
+                    <Typography variant="h6">⭐ Rating</Typography>
+                    <Typography variant="body1" sx={{ mb: 2 }}>
+                      {requirement.rating ?? 'Not rated'}
+                    </Typography>
+
+                    <Button variant="contained" color="error" onClick={handleDelete}>
+                      Delete Requirement
+                    </Button>
+                  </Paper>
+                </Grid>
+              </Grid>
+            </Stack>
+          </Box>
+        </Box>
+      </Box>
+    </AppTheme>
+  );
+}

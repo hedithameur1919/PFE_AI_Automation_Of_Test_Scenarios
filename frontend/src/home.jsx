@@ -6,13 +6,10 @@ import {
   Typography,
   Box,
   Container,
-  AppBar,
-  Toolbar,
   CssBaseline,
   Paper,
   Grid,
   IconButton,
-  Tooltip,
   FormControl,
   InputLabel,
   MenuItem,
@@ -21,12 +18,13 @@ import {
 import { jsPDF } from "jspdf";
 import axios from "axios";
 import { translateToFrench } from "./translate";
-import LogoutIcon from "@mui/icons-material/Logout";
 import DownloadIcon from "@mui/icons-material/Download";
 import TranslateIcon from "@mui/icons-material/Translate";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import StarIcon from "@mui/icons-material/Star";
-
+import HomeNavbar from './components/HomeNavbar';
+import HomeHero from './components/HomeHero';
+import HomeFooter from './components/HomeFooter';
 function Home() {
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
@@ -42,11 +40,16 @@ function Home() {
   const [loadingSquash, setLoadingSquash] = useState(false);
   const [scenarioType, setScenarioType] = useState("positive");
   const [selectedProjectId, setSelectedProjectId] = useState(null);
-
-
+  const [testCaseProjectId, setTestCaseProjectId] = useState("");
+  const [testStepCaseId, setTestStepCaseId] = useState("");
+  const [testCaseFolderId, setTestCaseFolderId] = useState("");
+  const [jiraUsername, setJiraUsername] = useState("");
+  const [jiraPassword, setJiraPassword] = useState("");
+  const [jiraIssueKey, setJiraIssueKey] = useState("");
 
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const username = localStorage.getItem("username");
 
   const axiosInstance = axios.create({
     baseURL: "http://localhost:8000",
@@ -101,7 +104,7 @@ function Home() {
       alert("Please enter Squash TM credentials");
       return;
     }
-
+    setShowSquashSection(true);
     setLoadingSquash(true);
     try {
       // First: Login check
@@ -156,9 +159,103 @@ function Home() {
       console.error("Error adding scenario to Squash:", error);
       alert("Error adding scenario to Squash. Check credentials or project selection.");
     }
+  };
+  const handleAddTestCase = async () => {
+  if (!output || !testCaseProjectId || !squashUsername || !squashPassword) {
+    alert("Missing data for test case creation");
+    return;
+  }
+
+  try {
+    await axios.post("http://localhost:8000/squash/add-test-case", {
+      project_id: parseInt(testCaseProjectId),
+      gherkin_script: output
+    }, {
+      auth: {
+        username: squashUsername,
+        password: squashPassword,
+      },
+    });
+
+    alert("Test case added to Squash successfully!");
+  } catch (error) {
+    console.error("Add Test Case Error:", error);
+    alert("Failed to add test case to Squash");
+  }
+  };
+
+  const handleAddTestCaseToFolder = async () => {
+  if (!output || !testCaseFolderId || !squashUsername || !squashPassword) {
+    alert("Missing data for test case folder creation");
+    return;
+  }
+
+  try {
+    await axios.post("http://localhost:8000/squash/add-test-case-to-folder", {
+      folder_id: parseInt(testCaseFolderId),
+      gherkin_script: output
+    }, {
+      auth: {
+        username: squashUsername,
+        password: squashPassword,
+      },
+    });
+
+    alert("Test case added to folder successfully!");
+  } catch (error) {
+    console.error("Add Test Case to Folder Error:", error);
+    alert("Failed to add test case to folder");
+  }
+  };
+
+  const handleAddTestStep = async () => {
+  if (!output || !testStepCaseId || !squashUsername || !squashPassword) {
+    alert("Missing data for test step creation");
+    return;
+  }
+
+  try {
+    await axios.post("http://localhost:8000/squash/add-test-step", {
+      test_case_id: parseInt(testStepCaseId),
+      gherkin_script: output
+    }, {
+      auth: {
+        username: squashUsername,
+        password: squashPassword,
+      },
+    });
+
+    alert("Test step added to Squash successfully!");
+  } catch (error) {
+    console.error("Add Test Step Error:", error);
+    alert("Failed to add test step to Squash");
+  }
+  };
+
+  const handleAddFromJira = async () => {
+  if (!jiraUsername || !jiraPassword || !jiraIssueKey) {
+    return alert("Please enter Jira credentials and issue key.");
+  }
+  try {
+    const res = await axiosInstance.post(
+      "/jira/fetch-issue",
+      { issue_key: jiraIssueKey },
+      {
+        auth: { username: jiraUsername, password: jiraPassword },
+      }
+    );
+    setInput(res.data.prompt);
+    setOutput("");
+    setTranslatedOutput("");
+    alert("Imported requirement from Jira!");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.detail || "Failed to fetch Jira issue");
+  }
 };
 
-//Squash part ends here
+
+  //Squash part ends here
 
   const handleTranslate = async () => {
     setTranslating(true);
@@ -225,7 +322,7 @@ function Home() {
   return (
     <>
       <CssBaseline />
-      <AppBar position="static" color="primary" elevation={2}>
+      {/* <AppBar position="static" color="primary" elevation={2}>
         <Toolbar sx={{ justifyContent: "space-between" }}>
           <Typography variant="h6" fontWeight="600">
             🧠 AI Squash — Scenario Generator
@@ -236,15 +333,48 @@ function Home() {
             </IconButton>
           </Tooltip>
         </Toolbar>
-      </AppBar>
-
-      <Container maxWidth={false} sx={{ mt: 5 }}>
+      </AppBar> */}
+      <HomeNavbar username={username} onLogout={handleLogout} />
+      <HomeHero />
+      <Container maxWidth={false} /* sx={{ mt: 5 }} */
+        sx={{ zoom: '70%'}}>
         <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 6 }}>
           <Grid container spacing={4}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={2} sm={4}>
               <Typography variant="h6" fontWeight="600" gutterBottom>
                 📌 Requirement
               </Typography>
+              <Box sx={{ mt: 2, p: 2, border: "1px dashed #888", borderRadius: 2 }}>
+                <Typography variant="subtitle1" fontWeight="600">
+                  ⚙️ Add Requirement from Jira
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                  <input
+                    type="text"
+                    placeholder="Jira Username"
+                    value={jiraUsername}
+                    onChange={(e) => setJiraUsername(e.target.value)}
+                    style={{ padding: 8, flex: 1 }}
+                  />
+                  <input
+                    type="password"
+                    placeholder="Jira Password / API Token"
+                    value={jiraPassword}
+                    onChange={(e) => setJiraPassword(e.target.value)}
+                    style={{ padding: 8, flex: 1 }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Issue Key"
+                    value={jiraIssueKey}
+                    onChange={(e) => setJiraIssueKey(e.target.value)}
+                    style={{ padding: 8, flex: 1 }}
+                  />
+                  <Button variant="contained" onClick={handleAddFromJira}>
+                    Add the Issue
+                  </Button>
+                </Box>
+              </Box>
               <TextareaAutosize
                 minRows={15}
                 placeholder="Describe your requirement..."
@@ -320,7 +450,7 @@ function Home() {
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={10} sm={8}>
               <Typography variant="h6" fontWeight="600" gutterBottom>
                 ✅ Generated Scenario
               </Typography>
@@ -329,7 +459,7 @@ function Home() {
                   bgcolor: "#f9f9f9",
                   borderRadius: 2,
                   p: 2,
-                  height: "400px",
+                  height: "500px",
                   overflowY: "auto",
                 }}
               >
@@ -404,6 +534,48 @@ function Home() {
                       {loadingSquash ? "Connecting..." : "Fetch Projects"}
                     </Button>
                   </Box>
+                  <>
+                    <Box mt={2}>
+                      <Typography variant="h6">Add Test Case</Typography>
+                      <input
+                        type="number"
+                        placeholder="Enter Project ID"
+                        value={testCaseProjectId}
+                        onChange={(e) => setTestCaseProjectId(e.target.value)}
+                      />
+                      <Button variant="contained" onClick={handleAddTestCase} style={{ marginLeft: '10px' }}>
+                        Add Test Case
+                      </Button>
+                    </Box>
+                    <Box mt={2}>
+                      <Typography variant="h6">Add Test Case to Folder</Typography>
+                      <input
+                        type="number"
+                        placeholder="Enter Folder ID"
+                        value={testCaseFolderId}
+                        onChange={(e) => setTestCaseFolderId(e.target.value)}
+                      />
+                      <Button
+                        variant="contained"
+                        onClick={handleAddTestCaseToFolder}
+                        style={{ marginLeft: '10px' }}
+                        >
+                        Add Test Case to Folder
+                      </Button>
+                    </Box>
+                    <Box mt={2}>
+                      <Typography variant="h6">Add Test Step</Typography>
+                      <input
+                        type="number"
+                        placeholder="Enter Test Case ID"
+                        value={testStepCaseId}
+                        onChange={(e) => setTestStepCaseId(e.target.value)}
+                      />
+                      <Button variant="contained" onClick={handleAddTestStep} style={{ marginLeft: '10px' }}>
+                        Add Test Step
+                      </Button>
+                    </Box>
+                  </>
 
                   {squashProjects.length > 0 && (
                     <Box sx={{ mt: 3 }}>
@@ -441,9 +613,10 @@ function Home() {
             </Grid>
           </Grid>
         </Paper>
-        <Typography variant="body2" align="center" sx={{ mt: 4, color: "text.secondary" }}>
+        {/* <Typography variant="body2" align="center" sx={{ mt: 4, color: "text.secondary" }}>
           © {new Date().getFullYear()} AI Squash. All rights reserved.
-        </Typography>
+        </Typography> */}
+        <HomeFooter />
       </Container>
     </>
   );

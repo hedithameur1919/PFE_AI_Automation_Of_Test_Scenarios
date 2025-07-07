@@ -1,44 +1,52 @@
+// frontend/src/admin.jsx
+import * as React from 'react';
 import {
-  AppBar,
-  Toolbar,
-  Typography,
   Box,
   CssBaseline,
-  Drawer,
+  Stack,
+  Typography,
+  Grid,
+  Paper,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Container,
-  Paper,
-  Grid,
   Divider,
-} from "@mui/material";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import PeopleIcon from "@mui/icons-material/People";
-import DescriptionIcon from "@mui/icons-material/Description";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import axios from "axios";
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 
-const drawerWidth = 260;
+import AppNavbar from './components/AppNavbar';
+import AppTheme from '../shared-theme/AppTheme';
+import Header from './components/Header';
 
-function Admin() {
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PeopleIcon from '@mui/icons-material/People';
+import DescriptionIcon from '@mui/icons-material/Description'; 
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+
+import {
+  chartsCustomizations,
+  dataGridCustomizations,
+  datePickersCustomizations,
+  treeViewCustomizations,
+} from './theme/customizations';
+
+const xThemeComponents = {
+  ...chartsCustomizations,
+  ...dataGridCustomizations,
+  ...datePickersCustomizations,
+  ...treeViewCustomizations,
+};
+
+const drawerWidth = 240;
+
+export default function Admin() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/landing");
-  };
-
-  const menuItems = [
-    { text: "Dashboard Overview", icon: <DashboardIcon />, path: "/admin" },
-    { text: "Manage Users", icon: <PeopleIcon />, path: "/admin/users" },
-    { text: "Manage Test Requirements", icon: <DescriptionIcon />, path: "/admin/requirements" },
-  ];
-
-  const [stats, setStats] = useState({
+  const [stats, setStats] = React.useState({
     users: 0,
     scenarios: 0,
     requirements: 0,
@@ -46,132 +54,141 @@ function Admin() {
     average_rating: 0,
   });
 
+  const menuItems = [
+    { text: 'Dashboard Overview', icon: <DashboardIcon />, path: '/admin' },
+    { text: 'Manage Users', icon: <PeopleIcon />, path: '/admin/users' },
+    { text: 'Manage Test Requirements', icon: <DescriptionIcon />, path: '/admin/requirements' },
+  ];
 
-  useEffect(() => {
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/landing');
+  };
+
+  React.useEffect(() => {
     const fetchStats = async () => {
       try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:8000/admin/stats", {
+        const token = localStorage.getItem('token');
+        const response = await axios.get('http://localhost:8000/admin/stats', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         setStats(response.data);
       } catch (error) {
-        console.error("Failed to fetch admin stats", error);
+        console.error('Failed to fetch admin stats', error);
       }
     };
-  
+
     fetchStats();
   }, []);
-  
-  
 
   return (
-    <>
-      <CssBaseline />
-
-      <AppBar position="fixed" color="primary" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-        <Toolbar sx={{ justifyContent: "space-between" }}>
-          <Typography variant="h6" fontWeight="600">
-            AI Squash - Admin Panel
-          </Typography>
-        </Toolbar>
-      </AppBar>
-
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          [`& .MuiDrawer-paper`]: {
+    <AppTheme themeComponents={xThemeComponents}>
+      <CssBaseline enableColorScheme />
+      <Box sx={{ display: 'flex' }}>
+        {/* Custom SideMenu with Tabs */}
+        <Box
+          component="nav"
+          sx={{
             width: drawerWidth,
-            boxSizing: "border-box",
-            backgroundColor: "#f5f5f5",
-          },
-        }}
-      >
-        <Toolbar />
-        <Box sx={{ overflow: "auto" }}>
-          <List>
-            {menuItems.map((item) => (
-              <ListItem 
-                  button 
-                  key={item.text} 
-                  onClick={() => navigate(item.path)} 
-                  sx={{ cursor: "pointer" }}
-              >
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
+            flexShrink: 0,
+          }}
+        >
+          <Box
+            sx={{
+              width: drawerWidth,
+              height: '100vh',
+              bgcolor: '#f5f5f5',
+              boxShadow: 3,
+              pt: 8,
+            }}
+          >
+            <List>
+              {menuItems.map((item) => (
+                <ListItem
+                  button
+                  key={item.text}
+                  selected={location.pathname === item.path}
+                  onClick={() => navigate(item.path)}
+                >
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItem>
+              ))}
+            </List>
+
+            <Divider sx={{ my: 1 }} />
+
+            <List>
+              <ListItem button onClick={handleLogout}>
+                <ListItemIcon>
+                  <ExitToAppIcon />
+                </ListItemIcon>
+                <ListItemText primary="Logout" />
               </ListItem>
-            ))}
-          </List>
-          <Divider />
-          <List>
-            <ListItem 
-              button 
-              onClick={handleLogout}
-              sx={{ cursor: "pointer" }}
-            >
-              <ListItemIcon><ExitToAppIcon /></ListItemIcon>
-              <ListItemText primary="Logout" />
-            </ListItem>
-          </List>
+            </List>
+          </Box>
         </Box>
-      </Drawer>
 
-      <Box component="main" sx={{ flexGrow: 1, bgcolor: "#f9f9f9", p: 4, ml: `${drawerWidth}px` }}>
-        <Toolbar />
-        <Container maxWidth="lg">
-          <Typography variant="h4" gutterBottom>
-            📊 Welcome, Admin!
-          </Typography>
+        {/* Top Navbar and Main Content */}
+        <Box sx={{ flexGrow: 1 }}>
+          <AppNavbar />
+          <Box
+            component="main"
+            sx={(theme) => ({
+              backgroundColor: theme.vars
+                ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
+                : alpha(theme.palette.background.default, 1),
+              minHeight: '100vh',
+              p: 4,
+              mt: 8,
+            })}
+          >
+            <Stack spacing={2} alignItems="center">
+              <Header title="📊 Welcome, Admin!" />
 
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={4}>
-          <Paper elevation={4} sx={{ p: 3, borderLeft: "5px solid #1976d2" }}>
-            <Typography variant="h6">👥 Registered Users</Typography>
-            <Typography variant="h4">{stats.users}</Typography>
-          </Paper>
-        </Grid>
+              <Grid container spacing={4} sx={{ maxWidth: '1200px', mt: 2 }}>
+                <StatCard title="👥 Registered Users" value={stats.users} />
+                <StatCard title="📑 Test Scenarios" value={stats.scenarios} />
+                <StatCard title="📝 Requirements" value={stats.requirements} />
+                <StatCard title="⭐ Total Ratings" value={stats.ratings} />
+                <StatCard title="⭐ Average Rating" value={stats.average_rating} />
+              </Grid>
 
-        <Grid item xs={12} md={4}>
-          <Paper elevation={4} sx={{ p: 3, borderLeft: "5px solid #1976d2" }}>
-            <Typography variant="h6">📑 Test Scenarios</Typography>
-            <Typography variant="h4">{stats.scenarios}</Typography>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Paper elevation={4} sx={{ p: 3, borderLeft: "5px solid #1976d2" }}>
-            <Typography variant="h6">📝 Requirements</Typography>
-            <Typography variant="h4">{stats.requirements}</Typography>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Paper elevation={4} sx={{ p: 3, borderLeft: "5px solid #1976d2" }}>
-            <Typography variant="h6">⭐ Total Ratings</Typography>
-            <Typography variant="h4">{stats.ratings}</Typography>
-          </Paper>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Paper elevation={4} sx={{ p: 3, borderLeft: "5px solid #1976d2" }}>
-            <Typography variant="h6">⭐ Average Rating</Typography>
-            <Typography variant="h4">{stats.average_rating}</Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-
-
-          <Typography variant="body2" align="center" sx={{ mt: 5, color: "text.secondary" }}>
-            © {new Date().getFullYear()} AI Squash. Admin Panel.
-          </Typography>
-        </Container>
+              <Typography
+                variant="body2"
+                align="center"
+                sx={{ mt: 5, color: 'text.secondary' }}
+              >
+                © {new Date().getFullYear()} TestAutoMate. Admin Panel.
+              </Typography>
+            </Stack>
+          </Box>
+        </Box>
       </Box>
-    </>
+    </AppTheme>
   );
 }
 
-export default Admin;
+// Reusable Stat Card
+// eslint-disable-next-line react/prop-types
+function StatCard({ title, value }) {
+  return (
+    <Grid item xs={12} sm={6} md={4}>
+      <Paper
+        elevation={4}
+        sx={{
+          p: 3,
+          height: '100%',
+          borderLeft: '5px solid #1976d2',
+        }}
+      >
+        <Typography variant="h6" gutterBottom>
+          {title}
+        </Typography>
+        <Typography variant="h4">{value}</Typography>
+      </Paper>
+    </Grid>
+  );
+}
